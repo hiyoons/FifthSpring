@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html
+  lang="ko"
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{base-layout::layout(~{::section})}"
+>
+  <body>
+    <section class="container">
+      <div id="map" style="width: 100%; height: 350px"></div>
+      <form th:action="@{/map/location/music/add}" method="post" onsubmit="return false;">
+        <h1>위치 선택</h1>
+        <label class="form-label">위치 선택</label>
+        <div id="address-container"></div>
+
+        <div id="location"></div>
+
+
+        <br />
+        <h1>음악 검색</h1>
+        <div class="row align-items-center">
+          <div class="col-md-4">
+            <button id="findYoutube" class="w-80 btn btn-success">
+              음악 찾기
+            </button>
+          </div>
+          <div class="col">
+            <label>음악 이름</label>
+            <div id="selectedMusicContainer"></div>
+          </div>
+        </div>
+        <h1>태그</h1>
+        <div class="mb-3">
+          <label class="form-label">해시태그</label>
+
+            <input
+              type="text"
+              id="hashtags"
+              class="form-control"
+              placeholder="Enter로 추가해보세요."
+            />
+
+            <div class="d-flex flex-row gap-3" id="hashtags-container">
+              <p th:if="${tagList}!=null" th:each="tag: ${hashtags}">
+                <a type="button">
+                  <button th:text="${tag.getHashTag().getTagName()}" class="btn btn-dark"></button>
+                </a>
+                <a type="button">
+
+
+                  <button id="remove-btn"  type="button" class="btn btn-default" th:onclick="removeBtn(this)"
+                          th:data-tag="${tag.getHashTag().getTagName()}">
+                    <i class="bi bi-x-square-fill"></i>
+                  </button>
+
+                </a>
+              </p>
+
+            </div>
+
+          <input
+            type="hidden"
+            id="existTags-hidden"
+            th:value="${existHashtags}"
+          />
+          <input type="hidden" id="hashtags-hidden" />
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="save-button">
+          저장
+        </button>
+      </form>
+      <script src="/js/youtube.js?testNm=20"></script>
+      <script type="text/javascript">
+        function setYoutubeTitle(musics) {
+          console.log("전달된 음악목록");
+
+          const container = document.getElementById("selectedMusicContainer");
+          musics.forEach((video) => {
+            const div = document.createElement("div");
+
+            div.innerHTML = `<a href="https://youtube.com/watch?v=${video.videoId}">${video.title}</a>`;
+            div.id = "playItem";
+            container.appendChild(div);
+          });
+        }
+
+        window.onload = function () {
+          document.getElementById("findYoutube").onclick = function () {
+            window.open(
+              "/youtube/search",
+              "",
+              "width=800px,height=600px,top=200px,left=200px;"
+            );
+          };
+        };
+      </script>
+      <script
+        type="text/javascript"
+        src="//dapi.kakao.com/v2/maps/sdk.js?appkey=${YOUR_KEY}&libraries=services"
+      ></script>
+
+      <script>
+                var mapContainer = document.getElementById('map'), // 지도를 표시할 div
+                    mapOption = {
+                        center: new kakao.maps.LatLng(37.518059, 126.9586982), // 지도의 중심좌표
+                        level: 1 // 지도의 확대 레벨
+                    };
+
+                     // 지도를 표시할 div와  지도 옵션으로  지도를 생성합니다
+                var map = new kakao.maps.Map(mapContainer, mapOption);
+                var geocoder = new kakao.maps.services.Geocoder();
+                var marker = new kakao.maps.Marker({
+                            // 지도 중심좌표에 마커를 생성합니다
+                            position: map.getCenter()
+                            });
+
+                searchAddrFromCoords(map.getCenter(),addLocationDisplay);
+                // 지도에 클릭 이벤트를 등록합니다
+                // 지도를 클릭하면 마지막 파라미터로 넘어온 함수를 호출합니다
+                kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+
+                // 클릭한 위도, 경도 정보를 가져옵니다
+                var latlng = mouseEvent.latLng;
+
+
+                searchDetailAddrFromCoords(latlng,function(result,status){
+                    if(status === kakao.maps.services.Status.OK){
+                        var detailAddr = !!result[0].road_address ? '<div id="streetAddress">도로명주소 : ' + result[0].road_address.address_name + '</div>' : '';
+                        detailAddr += '<div id="lotNumberAddress">'+result[0].address.address_name+'</div>';
+
+                        var content = '<div>법정동 주소정보' +
+                                    detailAddr +
+                                '</div>';
+                        marker.setPosition(latlng);
+                        marker.setMap(map);
+                        var latLngContent = '<p id="latitude" hidden="hidden">'+ latlng.getLat()+'</p>'+'<p id="longitude" hidden="hidden">'+latlng.getLng()+'</p>';
+                        const latLngContainer = document.getElementById('location');
+                        latLngContainer.innerHTML = latLngContent;
+
+                        const addressInput = document.getElementById('address-container');
+                        let newAddress=document.getElementById('address-id');
+                        if (!newAddress) {
+                            newAddress = document.createElement('div');
+                            newAddress.id = "address-id";
+                            addressInput.appendChild(newAddress);
+                        }
+                        newAddress.innerHTML = content;
+                    }
+                    }
+            )
+        });
+
+                //좌표로 행정동 주소 가져오기
+                function searchAddrFromCoords(coords, callback) {
+
+                    geocoder.coord2RegionCode(coords.getLng(), coords.getLat(), callback);
+                }
+
+
+            function searchDetailAddrFromCoords(coords, callback) {
+                // 좌표로 법정동 상세 주소 정보를 요청합니다
+                geocoder.coord2Address(coords.getLng(), coords.getLat(), callback);
+            }
+
+             //정보 추가
+            function addLocationDisplay(result,status){
+                if (status === kakao.maps.services.Status.OK) {
+                    var infoDiv = document.getElementById('address-id');
+
+                    for(var i = 0; i < result.length; i++) {
+                        // 행정동의 region_type 값은 'H' 이므로
+                        if (result[i].region_type === 'H') {
+                            infoDiv.innerHTML = result[i].address_name;
+                            break;
+                        }
+                    }
+
+                }
+
+
+            }
+      </script>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{base-layout::layout(~{::section})}">
+<body>
+<section class="container">
+    <div id="map" style="width:100%;height:350px;"></div>
+    <table class="table">
+        <thead>
+        <tr>
+            <td>#</td>
+            <td>위치</td>
+
+            <td style="width: 20%;">수정날짜</td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr id="songArticle" th:each="songArticle : ${page.content}">
+            <td th:text="${songArticle.id}">id</td>
+            <td><a th:text="${songArticle.address}" th:href="@{/playlist/content(id=${songArticle.id})}">address</a></td>
+
+            <td th:text="${#calendars.format(songArticle.updated,'yyyy-MM-dd HH:mm:ss')}">2024-06-30 09:03:19</td>
+        </tr>
+        </tbody>
+    </table>
+    <nav th:if="${!page.isEmpty()}">
+        <ul class="pagination" th:with="start=${T(java.lang.Math).floor(page.number / 5) * 5}, last=(${start + 4 < page.totalPages ? start + 4 : page.totalPages - 1})">
+            <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                <a class="page-link" th:href="@{/playlist/all(page=${page.number-1})}">&laquo;</a>
+            </li>
+            <li th:each="pageNumber : ${#numbers.sequence(start,last)}"
+                class="page-item" th:classappend="${pageNumber == page.number} ? 'active'">
+                <a class="page-link" th:text="${pageNumber+1}" th:href="@{/playlist/all(page=${pageNumber})}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                <a class="page-link" th:href="@{/playlist/all(page=${page.number+1})}">&raquo;</a>
+            </li>
+        </ul>
+    </nav>
+    <a type="button"  class="btn btn-primary" th:href="@{/map/kakaomap}">글쓰기</a>
+
+    <script
+            type="text/javascript"
+            src="//dapi.kakao.com/v2/maps/sdk.js?appkey=${YOUR_KEY}&libraries=services"
+    ></script>
+    <script th:inline="javascript">
+
+        const contentList = [[${page.content}]];
+        var mapList = [];
+        console.log("contentList");
+        console.log(contentList);
+     contentList.forEach(content=> {
+            if (content.tagList.length>0){
+
+            mapList.push([content.latitude,content.longitude,content.tagList]);}
+            else{
+                mapList.push([content.latitude,content.longitude]);
+                }
+
+        });
+        var mapContainer = document.getElementById('map'), // 지도를 표시할 div
+                    mapOption = {
+                        center: new kakao.maps.LatLng(mapList[0][0], mapList[0][1]),// 지도의 중심좌표
+                        level: 3 // 지도의 확대 레벨
+                    };
+
+                     // 지도를 표시할 div와  지도 옵션으로  지도를 생성합니다
+        var map = new kakao.maps.Map(mapContainer, mapOption);
+
+
+        for (var i=0;i<mapList.length; i++){
+
+            var marker = new kakao.maps.Marker({
+                map: map,
+                position: new kakao.maps.LatLng(mapList[i][0],mapList[i][1])
+            });
+            var mapTagList = [];
+            var tagItem = mapList[i][2];
+            if (tagItem){
+                var tagName = tagItem['tagName'];
+                console.log(tagItem);
+                for(var j=0;j<tagItem.length;j++){
+                     console.log(tagItem[j]['tagName']);
+                     mapTagList.push(tagItem[j]['tagName']);
+                     console.log(mapTagList);
+                }
+                console.log(mapTagList.join(', '));
+
+            }
+             var mapInfo = '<div>' + mapTagList.join(', ') + '</div>';
+
+                 var infoWindow = new kakao.maps.InfoWindow({
+                 content: mapInfo
+                });
+                kakao.maps.event.addListener(marker, 'mouseover', makeOverWindow(map,marker,infoWindow));
+         kakao.maps.event.addListener(marker, 'mouseout', makeOutWindow(infoWindow));
+        }
+
+        function makeOverWindow(map,marker,infoWindow){
+            return function(){
+                infoWindow.open(map,marker);
+            }
+        }
+
+        function makeOutWindow(infoWindow){
+            return function(){
+                infoWindow.close();
+            }
+        }
+
+    </script>
+</section>
+</body>
+</html>

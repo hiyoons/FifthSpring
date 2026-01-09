@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ko"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{base-layout::layout(~{::section})}">
+<head>
+
+
+    <title></title>
+</head>
+<body>
+<section class="container">
+
+
+    <form th:object="${playlist}" th:action="@{/playlist/edit}" method="get" onsubmit="return false;">
+        <input type="hidden" name="id" th:value="*{id}" id="article-id" />
+        <div class="mb-3">
+            <div id="map" style="width: 100%; height: 350px"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">위치</label>
+            <div class="d-flex align-items gap-0 column-gap-3">
+                <p type="text" class="form-control align-self-center" id="address"  th:text="*{address}"></p>
+                <button type="button" th:onclick="locationReset(this)" class="btn concept-btn" style="margin-bottom: 16px;">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+            </div>
+        </div>
+        <div class="mb-3">
+            <p id="latitude" th:text="*{latitude}" hidden="hidden"></p>
+            <p id="longitude" th:text ="*{longitude}" hidden="hidden"></p>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">해시태그</label>
+            <input
+                    type="text"
+                    id="hashtags"
+                    class="form-control"
+                    placeholder="Enter로 추가해보세요."
+            />
+            <div class="d-flex flex-row gap-3" id="hashtags-container" >
+
+                <p  th:if="*{tagList.size()!=0}" th:each="tag : *{tagList}" >
+                    <a type="button">
+                        <button th:text="${tag.getTagName}" class="btn btn-dark"></button>
+                    </a>
+                    <a type="button">
+
+
+                            <button id="remove-btn"  type="button" class="btn btn-default" th:onclick="removeBtn(this)"
+                                    th:data-tag="${tag.getTagName}">
+                                <i class="bi bi-x-square-fill"></i>
+                            </button>
+
+                    </a>
+                </p>
+            </div>
+            <input
+                    type="hidden"
+                    id="existTags-hidden"
+                    th:value="${existHashtags}"
+            />
+            <input type="hidden" id="hashtags-hidden" />
+        </div>
+        <div class="mb-3">
+            <h1>음악 검색</h1>
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <button id = "findYoutube"  type="button" class="w-80 btn btn-success">
+                        음악 찾기
+                    </button>
+                </div>
+            <h1>플레이 리스트</h1>
+            <div id="selected">
+                <p id="playItem" th:if="*{songList.size()!=0}" th:each="song : *{songList}">
+                    <a type="button" th:href="${song.getHref}">
+                        <button th:text="${song.getText}" class="btn btn-success"></button>
+                    </a>
+                    <button type="button" class="btn btn-default" onclick="removeSong(this)">
+                        <i class="bi bi-x-square-fill"></i>
+                    </button>
+                </p>
+            </div>
+        </div>
+        </div>
+        <button id="updateBtn" type="submit" class="btn btn-primary">저장</button>
+    </form>
+    <script
+            type="text/javascript"
+            src="//dapi.kakao.com/v2/maps/sdk.js?appkey=${YOUR_KEY}&libraries=services"
+    ></script>
+    <script src="/js/update.js?v=<%=System.currentTimeMillis() %>" type="text/javascript"></script>
+    <script>
+
+        const latitude = document.getElementById('latitude').innerHTML;
+        const longitude = document.getElementById('longitude').innerHTML;
+
+        const initLatitude = latitude;
+        const initLongitude = longitude;
+        var geocoder = new kakao.maps.services.Geocoder();
+      var mapContainer = document.getElementById('map'), // 지도를 표시할 div
+        mapOption = {
+                        center: new kakao.maps.LatLng(latitude, longitude),// 지도의 중심좌표
+                        level: 3 // 지도의 확대 레벨
+                    };
+         // 지도를 표시할 div와  지도 옵션으로  지도를 생성합니다
+                var map = new kakao.maps.Map(mapContainer, mapOption);
+              var marker = new kakao.maps.Marker({
+                            // 지도 중심좌표에 마커를 생성합니다
+                            position:  new kakao.maps.LatLng(latitude, longitude)
+                            });
+                 marker.setMap(map);
+      var address = document.getElementById('address').innerHTML;
+      searchAddrFromCoords(map.getCenter(),addLocationDisplay);
+      // 지도에 클릭 이벤트를 등록합니다
+      // 지도를 클릭하면 마지막 파라미터로 넘어온 함수를 호출합니다
+      kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+
+      // 클릭한 위도, 경도 정보를 가져옵니다
+      var latlng = mouseEvent.latLng;
+       console.log(latlng);
+
+      searchDetailAddrFromCoords(latlng,function(result,status){
+          if(status === kakao.maps.services.Status.OK){
+
+              marker.setPosition(latlng);
+              marker.setMap(map);
+              document.getElementById('address').innerHTML = result[0].address.address_name;
+                document.getElementById('latitude').innerHTML = latlng.getLat();
+                document.getElementById('longitude').innerHTML = latlng.getLng();
+          }
+          }
+  )
+});
+
+      //좌표로 행정동 주소 가져오기
+      function searchAddrFromCoords(coords, callback) {
+
+          geocoder.coord2RegionCode(coords.getLng(), coords.getLat(), callback);
+      }
+
+
+  function searchDetailAddrFromCoords(coords, callback) {
+      // 좌표로 법정동 상세 주소 정보를 요청합니다
+      geocoder.coord2Address(coords.getLng(), coords.getLat(), callback);
+  }
+
+   //정보 추가
+  function addLocationDisplay(result,status){
+      if (status === kakao.maps.services.Status.OK) {
+          var infoDiv = document.getElementById('address-id');
+
+          for(var i = 0; i < result.length; i++) {
+              // 행정동의 region_type 값은 'H' 이므로
+              if (result[i].region_type === 'H') {
+                  infoDiv.innerHTML = result[i].address_name;
+                  break;
+              }
+          }
+
+        }
+      }
+
+      // 위치 초기화
+      function locationReset(){
+          console.log(initLatitude);
+          console.log(initLongitude);
+          var resetLatlng = new kakao.maps.LatLng(initLatitude, initLongitude);
+
+          searchDetailAddrFromCoords(resetLatlng,function(result,status){
+             if(status === kakao.maps.services.Status.OK){
+
+             marker.setPosition(resetLatlng);
+             marker.setMap(map);
+             document.getElementById('address').innerHTML = result[0].address.address_name;
+
+          }
+
+            });
+        }
+    </script>
+
+
+    <script type="text/javascript">
+        const searchYoutubeBtn = document.getElementById("findYoutube");
+        const existSongs = new Set();
+
+        window.onload = function () {
+            // 페이지 로드 시 기존 곡들의 href를 Set에 저장
+            document.querySelectorAll('#selected a').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href) {
+                    existSongs.add(href);
+                }
+            });
+
+            // 음악 찾기 버튼 클릭 이벤트
+            searchYoutubeBtn.onclick = function() {
+                window.open(
+                    "/youtube/search",
+                    "musicSearch",
+                    "width=800px,height=600px,top=200px,left=200px"
+                );
+            };
+        }
+
+        // 자식 창에서 호출되는 함수
+        function setYoutubeTitle(musics) {
+            console.log("전달된 음악목록:", musics);
+
+            const selectedDiv = document.getElementById("selected");
+
+            // 중복되지 않은 곡만 필터링
+            const newItems = musics.filter(music => {
+                const videoUrl = `https://youtube.com/watch?v=${music.videoId}`;
+                return !existSongs.has(videoUrl);
+            });
+
+            console.log("추가될 새로운 곡:", newItems);
+
+            // 새로운 곡들을 DOM에 추가
+            newItems.forEach((video) => {
+                const videoUrl = `https://youtube.com/watch?v=${video.videoId}`;
+
+                // 새로운 p 태그 생성
+                const pTag = document.createElement('p');
+                pTag.id = 'playItem';
+
+                // a 태그와 버튼 생성
+                pTag.innerHTML = `
+                    <a type="button" href="${videoUrl}">
+                        <button class="btn btn-success">${video.title}</button>
+                    </a>
+                    <button type="button" class="btn btn-default" onclick="removeSong(this)">
+                        <i class="bi bi-x-square-fill"></i>
+                    </button>
+                `;
+
+                selectedDiv.appendChild(pTag);
+
+                // Set에 추가하여 이후 중복 방지
+                existSongs.add(videoUrl);
+            });
+        }
+
+        // 곡 삭제 기능
+        function removeSong(button) {
+            const pTag = button.closest('p');
+            const href = pTag.querySelector('a').getAttribute('href');
+
+            // Set에서도 제거
+            existSongs.delete(href);
+
+            // DOM에서 제거
+            pTag.remove();
+        }
+    </script>
+</section>
+</body>
+</html>

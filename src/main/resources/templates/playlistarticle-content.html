@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{base-layout::layout(~{::section})}">
+<body>
+<section class="container">
+
+    <div id="map" style="width: 100%; height: 350px"></div>
+    <p id="latitude" th:text="${playList.latitude}" hidden="hidden"></p>
+    <p id="longitude" th:text ="${playList.longitude}" hidden="hidden"></p>
+    <table class="table">
+        <tbody>
+        <tr>
+            <td style="width: 20%;">#</td>
+            <td th:text="${playList.id}" id="playlist-id">100</td>
+        </tr>
+        <tr>
+            <td>위치</td>
+            <td th:text="${playList.address}">위치</td>
+        </tr>
+
+
+        <tr>
+            <td>글쓴 날짜</td>
+            <td th:text="${#calendars.format(playList.created,'yyyy-MM-dd HH:mm:ss')}">2024-06-30 09:03:18</td>
+        </tr>
+        <tr>
+            <td>수정 날짜</td>
+            <td th:text="${#calendars.format(playList.updated,'yyyy-MM-dd HH:mm:ss')}">2024-06-30 10:10:25</td>
+        </tr>
+        <tr>
+            <td>해시태그</td>
+
+                <td th:if="${playList.getTagList.size()!=0}" th:each="tag : ${playList.getTagList}">
+                    <a type="button">
+                        <button th:text="${tag.getTagName}" class="btn btn-dark"></button>
+                    </a>
+                </td>
+
+        </tr>
+        <tr >
+            <td>플레이리스트</td>
+            <td th:if="${playList.getSongList.size()!=0}" th:each="song : ${playList.getSongList}">
+                <a type="button" th:href="${song.getHref}">
+                    <button th:text="${song.getText}" class="btn btn-success"></button>
+                </a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <a type="button" class="btn btn-info btn-sm"  th:href="@{/playlist/all}">목록</a>
+
+    <a type="button" class="btn btn-warning btn-sm" th:href="@{/playlist/content/edit/{id}(id=${playList.id})}">수정</a>
+
+    <button type="button" class="btn btn-danger btn-sm" id="deleteBtn">삭제</button>
+
+
+<!--    <th:block sec:authorize="isAuthenticated()" th:if="${#authentication.principal.memberId == article.getMemberId}">-->
+<!--        <a type="button" class="btn btn-warning btn-sm" th:href="@{/article/edit(id=${article.id})}">수정</a>-->
+<!--        <a type="button" class="btn btn-danger btn-sm" th:href="@{/article/delete(id=${article.id})}">삭제</a>-->
+<!--    </th:block>-->
+    <script
+            type="text/javascript"
+            src="//dapi.kakao.com/v2/maps/sdk.js?appkey=${YOUR_KEY}&libraries=services"
+    ></script>
+    <script src="/js/update.js?v=<%=System.currentTimeMillis() %>" type="text/javascript"></script>
+
+    <script>
+        const latitude = document.getElementById('latitude').innerHTML;
+        const longitude = document.getElementById('longitude').innerHTML;
+
+        var mapContainer = document.getElementById('map'), // 지도를 표시할 div
+                    mapOption = {
+                        center: new kakao.maps.LatLng(latitude, longitude),// 지도의 중심좌표
+                        level: 3 // 지도의 확대 레벨
+                    };
+
+                     // 지도를 표시할 div와  지도 옵션으로  지도를 생성합니다
+                var map = new kakao.maps.Map(mapContainer, mapOption);
+              var marker = new kakao.maps.Marker({
+                            // 지도 중심좌표에 마커를 생성합니다
+                            position:  new kakao.maps.LatLng(latitude, longitude)
+                            });
+                 marker.setMap(map);
+
+    </script>
+</section>
+</body>
+</html>

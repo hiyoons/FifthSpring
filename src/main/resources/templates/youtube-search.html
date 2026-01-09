@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="https://www.thymeleaf.org"
+
+      th:replace="~{base-layout::layout(~{::section})}">
+<body>
+
+<section class="container">
+    <h1>유튜브 검색</h1>
+    <form action="/api/youtube/search" method="get">
+        <input type="text" class="search-word" id="search-word" name="keyword">
+
+        <button type="submit" id="search-button" class="btn btn-primary btn-sm">검색하기</button>
+    </form>
+
+    <script th:src="@{/js/youtube.js}"></script>
+</section>
+
+</body>
+</html>

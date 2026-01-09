@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="https://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      th:replace="~{base-layout::layout(~{::section})}">
+<body>
+<section class="container">
+    <script>
+        function sendToParent(){
+                    // 체크된 항목들의 title 수집
+
+    const checkedItems = [];
+    document.querySelectorAll('.video-checkbox:checked').forEach(checkbox => {
+        checkedItems.push({
+        videoId: checkbox.value,
+        title: checkbox.getAttribute('data-title')
+    });
+    });
+
+if (checkedItems.length === 0) {
+    alert('항목을 선택해주세요.');
+    return;
+}
+
+// 부모창으로 데이터 전달
+if (window.opener && !window.opener.closed) {
+    window.opener.setYoutubeTitle(checkedItems);
+    window.close();
+} else {
+    alert('부모 창을 찾을 수 없습니다.');
+}
+
+        }
+
+    </script>
+    <h1>유튜브 검색 결과</h1>
+    <button type="submit" class="btn btn-primary" onclick="
+                      event.preventDefault(); sendToParent(event)">플레이리스트 추가</button>
+    <table class="table">
+        <thead>
+        <tr>
+            <td>제목</td>
+            <td>채널명</td>
+            <td>썸네일</td>
+            <td>선택</td>
+        </tr>
+        </thead>
+        <tr th:each="item : ${results}">
+            <td th:text="${item.title}"></td>
+            <td th:text="${item.channelTitle}"></td>
+            <td>
+                <iframe width="560" height="315" th:src="|https://www.youtube.com/embed/${item.videoId}|"  frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </td>
+            <td>
+                <div class="form-check form-check-inline">
+                    <input th:data-title="${item.title}" th:id="${item.videoId}"type="checkbox" th:name="selectedVideo" th:value="${item.videoId}" class="form-check-input video-checkbox" >
+                    <label th:for="${item.videoId}" th:text="${item.title}" class="form-check-label"></label>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <script src="/js/youtube.js"></script>
+</section>
+
+</body>
+</html>
