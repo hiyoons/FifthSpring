@@ -7,6 +7,7 @@ import com.example.FifthSpring.service.PlayListArticleService;
 import com.example.FifthSpring.service.YoutubeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -19,9 +20,12 @@ import org.springframework.web.bind.annotation.*;
 public class MapController {
     private final YoutubeService youtubeService;
 
+
+    @Value("${kakao.api.key}")
+    private String apiKey;
     @GetMapping("/kakaomap")
     public String getKakaoMap(Model model){
-
+        model.addAttribute("kakaoApiKey",apiKey);
         return "kakaomap";
     }
 
@@ -30,6 +34,7 @@ public class MapController {
     @ResponseBody
     public String addLocationWithMusic(@RequestBody PlayListForm playListForm, BindingResult bindingResult){
         if(bindingResult.hasErrors()){
+
             return "kakaomap";
         }
         log.info("playListForm 정보: "+playListForm);

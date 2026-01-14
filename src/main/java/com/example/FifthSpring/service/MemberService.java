@@ -3,7 +3,6 @@ package com.example.FifthSpring.service;
 import com.example.FifthSpring.dto.MemberDto;
 import com.example.FifthSpring.dto.MemberForm;
 import com.example.FifthSpring.model.Member;
-import com.example.FifthSpring.repository.ArticleRepository;
 import com.example.FifthSpring.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,7 +14,6 @@ import java.util.Optional;
 @RequiredArgsConstructor//final 이나 @NotNULL인 값만 PARAMETER로 받는 생성자를 추가
 public class MemberService {
     private final MemberRepository memberRepository;
-    private final ArticleRepository articleRepository;
     private final PasswordEncoder passwordEncoder;
 
     public MemberDto findById(Long id){

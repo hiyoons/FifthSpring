@@ -52,17 +52,7 @@ public class YoutubeController {
                 }
                 ).collect(Collectors.toList());
 
-//        List<YoutubeResult> searchResult=resultSnippets.stream().map(
-//                snip->{
-//                    String thumbnail=snip.getThumbnails().getDefault().getUrl();
-//                    String title = snip.getTitle();
-//                    String channelTitle =snip.getChannelTitle();
-//
-//                    YoutubeResult youtubeResult = YoutubeResult.builder().channelTitle(channelTitle).thumbnail(thumbnail).title(title).build();
-//
-//                    return youtubeResult;
-//                }
-//        ).collect(Collectors.toList());
+
 
         model.addAttribute("results",searchResult);
 
